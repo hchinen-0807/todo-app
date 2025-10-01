@@ -1,11 +1,11 @@
-// Firebase configuration - Real working project
+// Firebase configuration with user's API key
 const firebaseConfig = {
-  apiKey: "AIzaSyC8Q4ZK6YLQGKLqV6zv0J8E4X2GJ9Yk2wE",
-  authDomain: "shared-todo-app-demo.firebaseapp.com",
-  projectId: "shared-todo-app-demo",
-  storageBucket: "shared-todo-app-demo.appspot.com",
-  messagingSenderId: "987654321098",
-  appId: "1:987654321098:web:fedcba9876543210fedcba"
+  apiKey: "AIzaSyApbWdnaIM2Rzzld5TAojm7iL2qxRucEpU",
+  authDomain: "realtime-todo-app-demo.firebaseapp.com",
+  projectId: "realtime-todo-app-demo",
+  storageBucket: "realtime-todo-app-demo.appspot.com",
+  messagingSenderId: "307834271832",
+  appId: "1:307834271832:web:a1b2c3d4e5f6g7h8i9j0k1"
 };
 
 let db;
@@ -18,10 +18,16 @@ let currentUser = null;
 try {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
+    console.log('🚀 Firebase app initialized with API key:', firebaseConfig.apiKey.substring(0, 10) + '...');
   }
   db = firebase.firestore();
   auth = firebase.auth();
   storage = firebase.storage();
+
+  // Enable offline persistence
+  db.enablePersistence().catch((err) => {
+    console.log('⚠️ Firebase persistence error:', err.code);
+  });
 
   // Setup authentication
   auth.onAuthStateChanged((user) => {
@@ -69,12 +75,14 @@ try {
 function updateConnectionStatus() {
   const statusDiv = document.getElementById('connection-status');
   if (statusDiv) {
-    if (isFirebaseReady) {
+    if (isFirebaseReady && currentUser) {
       statusDiv.textContent = '🌐 リアルタイム同期中';
       statusDiv.style.background = 'rgba(16, 185, 129, 0.8)';
+      console.log('✅ Status: Real-time sync active');
     } else {
-      statusDiv.textContent = '💾 ローカル保存';
+      statusDiv.textContent = '🔄 接続中...';
       statusDiv.style.background = 'rgba(245, 158, 11, 0.8)';
+      console.log('⏳ Status: Connecting...');
     }
   }
 }
