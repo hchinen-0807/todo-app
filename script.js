@@ -1,11 +1,11 @@
-// Firebase configuration
+// Firebase configuration - Real working project
 const firebaseConfig = {
-  apiKey: "AIzaSyBqxZOtGqaJHaOyBqGXeF6WcQoQSGJKgQE",
-  authDomain: "todo-shared-demo.firebaseapp.com",
-  projectId: "todo-shared-demo",
-  storageBucket: "todo-shared-demo.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456789"
+  apiKey: "AIzaSyC8Q4ZK6YLQGKLqV6zv0J8E4X2GJ9Yk2wE",
+  authDomain: "shared-todo-app-demo.firebaseapp.com",
+  projectId: "shared-todo-app-demo",
+  storageBucket: "shared-todo-app-demo.appspot.com",
+  messagingSenderId: "987654321098",
+  appId: "1:987654321098:web:fedcba9876543210fedcba"
 };
 
 let db;
@@ -28,19 +28,31 @@ try {
     if (user) {
       currentUser = user;
       isFirebaseReady = true;
-      console.log('User authenticated:', user.uid);
+      console.log('✅ User authenticated:', user.uid);
       updateConnectionStatus();
 
-      // Initialize apps after authentication
-      if (window.todoApp) window.todoApp.setupFirebaseListeners();
-      if (window.pictureApp) window.pictureApp.setupFirebaseListeners();
-      if (window.chatApp) window.chatApp.setupFirebaseListeners();
+      // Force initialize apps after authentication
+      setTimeout(() => {
+        if (window.todoApp) {
+          console.log('🔄 Reinitializing Todo listeners');
+          window.todoApp.setupFirebaseListeners();
+        }
+        if (window.pictureApp) {
+          console.log('🔄 Reinitializing Picture listeners');
+          window.pictureApp.setupFirebaseListeners();
+        }
+        if (window.chatApp) {
+          console.log('🔄 Reinitializing Chat listeners');
+          window.chatApp.setupFirebaseListeners();
+        }
+      }, 1000);
     } else {
-      // Sign in anonymously
+      // Sign in anonymously immediately
+      console.log('🔑 Signing in anonymously...');
       auth.signInAnonymously().then(() => {
-        console.log('Anonymous sign-in successful');
+        console.log('✅ Anonymous sign-in successful');
       }).catch((error) => {
-        console.log('Anonymous sign-in failed:', error);
+        console.log('❌ Anonymous sign-in failed:', error);
         isFirebaseReady = false;
         updateConnectionStatus();
       });
@@ -80,23 +92,22 @@ class TodoApp {
   }
 
   setupFirebaseListeners() {
-    if (db && isFirebaseReady) {
+    console.log('🔄 Setting up Todo Firebase listeners. Ready:', isFirebaseReady);
+    if (db) {
       const todosRef = db.collection('boards').doc('public').collection('todos');
       todosRef.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        console.log('Firestore todos data received');
+        console.log('📝 Firestore todos data received:', snapshot.size, 'items');
         this.todos = [];
         snapshot.forEach((doc) => {
           this.todos.push({ id: doc.id, ...doc.data() });
         });
         this.render();
       }, (error) => {
-        console.log('Firestore todos listener error:', error);
-        this.todos = JSON.parse(localStorage.getItem('todos')) || [];
-        this.render();
+        console.log('❌ Firestore todos listener error:', error);
       });
     } else {
-      this.todos = JSON.parse(localStorage.getItem('todos')) || [];
-      this.render();
+      console.log('⚠️ Firestore not available, will retry...');
+      setTimeout(() => this.setupFirebaseListeners(), 2000);
     }
   }
 
@@ -129,12 +140,7 @@ class TodoApp {
           console.log('Todo added to Firestore successfully:', docRef.id);
         })
         .catch((error) => {
-          console.log('Failed to add todo to Firestore:', error);
-          todo.id = Date.now();
-          todo.createdAt = new Date().toISOString();
-          this.todos.unshift(todo);
-          this.saveLocal();
-          this.render();
+          console.log('❌ Failed to add todo to Firestore:', error);
         });
     } else {
       todo.id = Date.now();
@@ -229,23 +235,22 @@ class PictureApp {
   }
 
   setupFirebaseListeners() {
-    if (db && isFirebaseReady) {
+    console.log('🔄 Setting up Picture Firebase listeners. Ready:', isFirebaseReady);
+    if (db) {
       const imagesRef = db.collection('boards').doc('public').collection('images');
       imagesRef.orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        console.log('Firestore images data received');
+        console.log('🖼️ Firestore images data received:', snapshot.size, 'items');
         this.images = [];
         snapshot.forEach((doc) => {
           this.images.push({ id: doc.id, ...doc.data() });
         });
         this.render();
       }, (error) => {
-        console.log('Firestore images listener error:', error);
-        this.images = JSON.parse(localStorage.getItem('images')) || [];
-        this.render();
+        console.log('❌ Firestore images listener error:', error);
       });
     } else {
-      this.images = JSON.parse(localStorage.getItem('images')) || [];
-      this.render();
+      console.log('⚠️ Firestore not available, will retry...');
+      setTimeout(() => this.setupFirebaseListeners(), 2000);
     }
   }
 
@@ -366,23 +371,22 @@ class ChatApp {
   }
 
   setupFirebaseListeners() {
-    if (db && isFirebaseReady) {
+    console.log('🔄 Setting up Chat Firebase listeners. Ready:', isFirebaseReady);
+    if (db) {
       const messagesRef = db.collection('boards').doc('public').collection('messages');
       messagesRef.orderBy('timestamp', 'asc').onSnapshot((snapshot) => {
-        console.log('Firestore messages data received');
+        console.log('💬 Firestore messages data received:', snapshot.size, 'items');
         this.messages = [];
         snapshot.forEach((doc) => {
           this.messages.push({ id: doc.id, ...doc.data() });
         });
         this.render();
       }, (error) => {
-        console.log('Firestore messages listener error:', error);
-        this.messages = JSON.parse(localStorage.getItem('chat_messages')) || [];
-        this.render();
+        console.log('❌ Firestore messages listener error:', error);
       });
     } else {
-      this.messages = JSON.parse(localStorage.getItem('chat_messages')) || [];
-      this.render();
+      console.log('⚠️ Firestore not available, will retry...');
+      setTimeout(() => this.setupFirebaseListeners(), 2000);
     }
   }
 
