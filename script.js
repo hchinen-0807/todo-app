@@ -1,13 +1,54 @@
-// Todo functionality
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  authDomain: "todo-app-shared.firebaseapp.com",
+  databaseURL: "https://todo-app-shared-default-rtdb.firebaseio.com",
+  projectId: "todo-app-shared",
+  storageBucket: "todo-app-shared.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef1234567890abcdef"
+};
+
+// Initialize Firebase (fallback configuration for demo)
+const demoConfig = {
+  databaseURL: "https://todo-app-demo-default-rtdb.firebaseio.com"
+};
+
+let database;
+let storage;
+
+try {
+  firebase.initializeApp(demoConfig);
+  database = firebase.database();
+  storage = firebase.storage();
+} catch (error) {
+  console.log('Firebase initialization failed, using localStorage fallback');
+}
+
+// Todo functionality with Firebase sync
 class TodoApp {
   constructor() {
-    this.todos = JSON.parse(localStorage.getItem('todos')) || [];
+    this.todos = [];
     this.init();
   }
 
   init() {
     this.bindEvents();
-    this.render();
+    this.setupFirebaseListeners();
+  }
+
+  setupFirebaseListeners() {
+    if (database) {
+      const todosRef = database.ref('todos');
+      todosRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        this.todos = data ? Object.values(data) : [];
+        this.render();
+      });
+    } else {
+      this.todos = JSON.parse(localStorage.getItem('todos')) || [];
+      this.render();
+    }
   }
 
   bindEvents() {
@@ -29,29 +70,60 @@ class TodoApp {
       id: Date.now(),
       text: text,
       completed: false,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     };
-    this.todos.unshift(todo);
-    this.save();
-    this.render();
-  }
 
-  toggleTodo(id) {
-    const todo = this.todos.find(t => t.id === id);
-    if (todo) {
-      todo.completed = !todo.completed;
-      this.save();
+    if (database) {
+      database.ref('todos').push(todo);
+    } else {
+      this.todos.unshift(todo);
+      this.saveLocal();
       this.render();
     }
   }
 
-  deleteTodo(id) {
-    this.todos = this.todos.filter(t => t.id !== id);
-    this.save();
-    this.render();
+  toggleTodo(id) {
+    if (database) {
+      database.ref('todos').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key].id === id) {
+              database.ref(`todos/${key}/completed`).set(!data[key].completed);
+            }
+          });
+        }
+      });
+    } else {
+      const todo = this.todos.find(t => t.id === id);
+      if (todo) {
+        todo.completed = !todo.completed;
+        this.saveLocal();
+        this.render();
+      }
+    }
   }
 
-  save() {
+  deleteTodo(id) {
+    if (database) {
+      database.ref('todos').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key].id === id) {
+              database.ref(`todos/${key}`).remove();
+            }
+          });
+        }
+      });
+    } else {
+      this.todos = this.todos.filter(t => t.id !== id);
+      this.saveLocal();
+      this.render();
+    }
+  }
+
+  saveLocal() {
     localStorage.setItem('todos', JSON.stringify(this.todos));
   }
 
@@ -80,16 +152,30 @@ class TodoApp {
   }
 }
 
-// Picture functionality
+// Picture functionality with Firebase sync
 class PictureApp {
   constructor() {
-    this.images = JSON.parse(localStorage.getItem('images')) || [];
+    this.images = [];
     this.init();
   }
 
   init() {
     this.bindEvents();
-    this.render();
+    this.setupFirebaseListeners();
+  }
+
+  setupFirebaseListeners() {
+    if (database) {
+      const imagesRef = database.ref('images');
+      imagesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        this.images = data ? Object.values(data) : [];
+        this.render();
+      });
+    } else {
+      this.images = JSON.parse(localStorage.getItem('images')) || [];
+      this.render();
+    }
   }
 
   bindEvents() {
@@ -117,22 +203,40 @@ class PictureApp {
         id: Date.now() + Math.random(),
         name: file.name,
         data: e.target.result,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       };
-      this.images.unshift(image);
-      this.save();
-      this.render();
+
+      if (database) {
+        database.ref('images').push(image);
+      } else {
+        this.images.unshift(image);
+        this.saveLocal();
+        this.render();
+      }
     };
     reader.readAsDataURL(file);
   }
 
   deleteImage(id) {
-    this.images = this.images.filter(img => img.id !== id);
-    this.save();
-    this.render();
+    if (database) {
+      database.ref('images').once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key].id === id) {
+              database.ref(`images/${key}`).remove();
+            }
+          });
+        }
+      });
+    } else {
+      this.images = this.images.filter(img => img.id !== id);
+      this.saveLocal();
+      this.render();
+    }
   }
 
-  save() {
+  saveLocal() {
     localStorage.setItem('images', JSON.stringify(this.images));
   }
 
@@ -163,16 +267,30 @@ class PictureApp {
   }
 }
 
-// Chat functionality
+// Chat functionality with Firebase sync (no bot)
 class ChatApp {
   constructor() {
-    this.messages = JSON.parse(localStorage.getItem('chat_messages')) || [];
+    this.messages = [];
     this.init();
   }
 
   init() {
     this.bindEvents();
-    this.render();
+    this.setupFirebaseListeners();
+  }
+
+  setupFirebaseListeners() {
+    if (database) {
+      const messagesRef = database.ref('messages');
+      messagesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        this.messages = data ? Object.values(data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
+        this.render();
+      });
+    } else {
+      this.messages = JSON.parse(localStorage.getItem('chat_messages')) || [];
+      this.render();
+    }
   }
 
   bindEvents() {
@@ -183,52 +301,51 @@ class ChatApp {
       e.preventDefault();
       const text = chatInput.value.trim();
       if (text) {
-        this.addMessage(text, 'user');
+        this.addMessage(text);
         chatInput.value = '';
-
-        // Simulate bot response
-        setTimeout(() => {
-          this.addBotResponse(text);
-        }, 1000);
       }
     });
   }
 
-  addMessage(text, sender) {
+  addMessage(text) {
     const message = {
       id: Date.now(),
       text: text,
-      sender: sender,
-      timestamp: new Date()
+      timestamp: new Date().toISOString(),
+      device: this.getDeviceInfo()
     };
-    this.messages.push(message);
-    this.save();
-    this.render();
+
+    if (database) {
+      database.ref('messages').push(message);
+    } else {
+      this.messages.push(message);
+      this.saveLocal();
+      this.render();
+    }
   }
 
-  addBotResponse(userMessage) {
-    const responses = [
-      "面白いですね！もっと教えてください。",
-      "なるほど、とても興味深いです。",
-      "それについてどう思いますか？",
-      "素晴らしいアイデアですね！",
-      "もう少し詳しく聞かせてください。",
-      "とても良い質問ですね。",
-      "その通りです！",
-      "興味深い視点ですね。"
-    ];
-
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    this.addMessage(randomResponse, 'bot');
+  getDeviceInfo() {
+    const userAgent = navigator.userAgent;
+    if (/Mobile|Android|iPhone|iPad/.test(userAgent)) {
+      return 'Mobile';
+    } else if (/Tablet/.test(userAgent)) {
+      return 'Tablet';
+    } else {
+      return 'PC';
+    }
   }
 
   clearMessages() {
-    this.messages = [];
-    this.save();
-    this.render();
+    if (database) {
+      database.ref('messages').remove();
+    } else {
+      this.messages = [];
+      this.saveLocal();
+      this.render();
+    }
   }
 
-  save() {
+  saveLocal() {
     localStorage.setItem('chat_messages', JSON.stringify(this.messages));
   }
 
@@ -238,7 +355,7 @@ class ChatApp {
 
     this.messages.forEach(message => {
       const div = document.createElement('div');
-      div.className = `chat-message ${message.sender}`;
+      div.className = 'chat-message user';
 
       const time = new Date(message.timestamp).toLocaleTimeString('ja-JP', {
         hour: '2-digit',
@@ -247,7 +364,7 @@ class ChatApp {
 
       div.innerHTML = `
         <div style="font-size: 0.8em; opacity: 0.7; margin-bottom: 5px;">
-          ${message.sender === 'user' ? 'あなた' : 'Bot'} • ${time}
+          ${message.device || 'Unknown'} • ${time}
         </div>
         <div>${message.text}</div>
       `;
@@ -265,6 +382,31 @@ document.addEventListener('DOMContentLoaded', () => {
   window.todoApp = new TodoApp();
   window.pictureApp = new PictureApp();
   window.chatApp = new ChatApp();
+
+  // Add connection status indicator
+  const statusDiv = document.createElement('div');
+  statusDiv.id = 'connection-status';
+  statusDiv.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+  `;
+
+  if (database) {
+    statusDiv.textContent = '🌐 リアルタイム同期中';
+    statusDiv.style.background = 'rgba(16, 185, 129, 0.8)';
+  } else {
+    statusDiv.textContent = '💾 ローカル保存';
+    statusDiv.style.background = 'rgba(245, 158, 11, 0.8)';
+  }
+
+  document.body.appendChild(statusDiv);
 
   // Add clear chat button
   const chatSection = document.querySelector('.chat-section h1');
