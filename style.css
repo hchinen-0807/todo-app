@@ -235,10 +235,11 @@ section:hover {
 }
 
 #picture-preview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 15px;
   margin-top: 20px;
+  justify-content: flex-start;
 }
 
 .preview-image {
@@ -365,7 +366,7 @@ section:hover {
     min-height: 400px;
   }
 
-  .chat-section {
+  .picture-section {
     grid-column: 1 / -1;
     min-height: 300px;
   }
@@ -388,11 +389,11 @@ section:hover {
   }
 
   .todo-section,
-  .picture-section {
+  .chat-section {
     min-height: 600px;
   }
 
-  .chat-section {
+  .picture-section {
     grid-column: 1 / -1;
     min-height: 400px;
   }
