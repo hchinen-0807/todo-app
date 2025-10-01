@@ -349,24 +349,184 @@ class PictureApp {
 
     this.images.forEach(image => {
       const container = document.createElement('div');
-      container.style.position = 'relative';
-      container.style.display = 'inline-block';
-
-      container.innerHTML = `
-        <img src="${image.data}" alt="${image.name}" class="preview-image"
-             style="max-width: 200px; max-height: 200px; object-fit: cover;">
-        <button onclick="window.pictureApp.deleteImage('${image.id}')"
-                style="position: absolute; top: 5px; right: 5px;
-                       background: rgba(220, 53, 69, 0.8); color: white;
-                       border: none; border-radius: 50%; width: 25px; height: 25px;
-                       cursor: pointer; display: flex; align-items: center;
-                       justify-content: center;">
-          <i class="fas fa-times"></i>
-        </button>
+      container.style.cssText = `
+        position: relative;
+        display: inline-block;
+        margin: 8px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease;
       `;
 
+      const img = document.createElement('img');
+      img.src = image.data;
+      img.alt = image.name;
+      img.className = 'preview-image';
+      img.style.cssText = `
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        cursor: pointer;
+        display: block;
+      `;
+
+      // 画像クリックで拡大表示
+      img.addEventListener('click', () => {
+        this.enlargeImage(image);
+      });
+
+      // 削除ボタン（右上）
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+      deleteBtn.style.cssText = `
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      `;
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteImage(image.id);
+      });
+      deleteBtn.addEventListener('mouseenter', () => {
+        deleteBtn.style.background = 'rgba(220, 53, 69, 1)';
+        deleteBtn.style.transform = 'scale(1.1)';
+      });
+      deleteBtn.addEventListener('mouseleave', () => {
+        deleteBtn.style.background = 'rgba(220, 53, 69, 0.9)';
+        deleteBtn.style.transform = 'scale(1)';
+      });
+
+      // ダウンロードボタン（右下）
+      const downloadBtn = document.createElement('button');
+      downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+      downloadBtn.style.cssText = `
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background: rgba(16, 185, 129, 0.9);
+        color: white;
+        border: none;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      `;
+      downloadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.downloadImage(image);
+      });
+      downloadBtn.addEventListener('mouseenter', () => {
+        downloadBtn.style.background = 'rgba(16, 185, 129, 1)';
+        downloadBtn.style.transform = 'scale(1.1)';
+      });
+      downloadBtn.addEventListener('mouseleave', () => {
+        downloadBtn.style.background = 'rgba(16, 185, 129, 0.9)';
+        downloadBtn.style.transform = 'scale(1)';
+      });
+
+      container.addEventListener('mouseenter', () => {
+        container.style.transform = 'scale(1.02)';
+      });
+      container.addEventListener('mouseleave', () => {
+        container.style.transform = 'scale(1)';
+      });
+
+      container.appendChild(img);
+      container.appendChild(deleteBtn);
+      container.appendChild(downloadBtn);
       preview.appendChild(container);
     });
+  }
+
+  enlargeImage(image) {
+    // モーダル作成
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      cursor: pointer;
+    `;
+
+    const img = document.createElement('img');
+    img.src = image.data;
+    img.alt = image.name;
+    img.style.cssText = `
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 8px;
+    `;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(220, 53, 69, 0.8);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    modal.addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.body.removeChild(modal);
+    });
+
+    img.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    modal.appendChild(img);
+    modal.appendChild(closeBtn);
+    document.body.appendChild(modal);
+  }
+
+  downloadImage(image) {
+    const link = document.createElement('a');
+    link.href = image.data;
+    link.download = image.name || 'image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
 
