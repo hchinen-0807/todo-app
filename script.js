@@ -1,11 +1,11 @@
-// Firebase configuration with user's API key
+// Firebase configuration - correct project todo-c3338
 const firebaseConfig = {
   apiKey: "AIzaSyApbWdnaIM2Rzzld5TAojm7iL2qxRucEpU",
-  authDomain: "realtime-todo-app-demo.firebaseapp.com",
-  projectId: "realtime-todo-app-demo",
-  storageBucket: "realtime-todo-app-demo.appspot.com",
-  messagingSenderId: "307834271832",
-  appId: "1:307834271832:web:a1b2c3d4e5f6g7h8i9j0k1"
+  authDomain: "todo-c3338.firebaseapp.com",
+  projectId: "todo-c3338",
+  storageBucket: "todo-c3338.appspot.com",
+  messagingSenderId: "281558547303",
+  appId: "1:281558547303:web:8e8c2dcc30c016dc7a8dc2"
 };
 
 let db;
@@ -14,61 +14,91 @@ let storage;
 let isFirebaseReady = false;
 let currentUser = null;
 
-// Initialize Firebase with Firestore and Auth
+// Initialize Firebase with enhanced error handling
+console.log('🔧 Initializing Firebase...');
 try {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    console.log('🚀 Firebase app initialized with API key:', firebaseConfig.apiKey.substring(0, 10) + '...');
+    console.log('🚀 Firebase app initialized');
+    console.log('📋 Project ID:', firebaseConfig.projectId);
+    console.log('🔑 API Key (partial):', firebaseConfig.apiKey.substring(0, 20) + '...');
   }
+
   db = firebase.firestore();
   auth = firebase.auth();
   storage = firebase.storage();
 
-  // Enable offline persistence
-  db.enablePersistence().catch((err) => {
-    console.log('⚠️ Firebase persistence error:', err.code);
-  });
+  // Test Firestore connection with allowed path
+  console.log('🧪 Testing Firestore connection...');
+  db.collection('boards').doc('public').collection('todos').limit(1).get()
+    .then((snapshot) => {
+      console.log('✅ Firestore connection test successful');
+    }).catch((error) => {
+      console.log('❌ Firestore connection test failed:', error);
+    });
 
-  // Setup authentication
+  // Setup authentication with detailed logging
   auth.onAuthStateChanged((user) => {
+    console.log('🔄 Auth state changed. User:', user ? user.uid : 'null');
+    console.log('🌐 Project ID:', firebaseConfig.projectId);
+    console.log('🔗 Auth Domain:', firebaseConfig.authDomain);
+    console.log('📱 User Agent:', navigator.userAgent);
+
     if (user) {
       currentUser = user;
       isFirebaseReady = true;
-      console.log('✅ User authenticated:', user.uid);
+      console.log('✅ User authenticated successfully');
+      console.log('👤 User UID:', user.uid);
+      console.log('🔑 User is Anonymous:', user.isAnonymous);
+      console.log('📧 User Email:', user.email || 'None');
       updateConnectionStatus();
 
-      // Force initialize apps after authentication
-      setTimeout(() => {
-        if (window.todoApp) {
-          console.log('🔄 Reinitializing Todo listeners');
-          window.todoApp.setupFirebaseListeners();
-        }
-        if (window.pictureApp) {
-          console.log('🔄 Reinitializing Picture listeners');
-          window.pictureApp.setupFirebaseListeners();
-        }
-        if (window.chatApp) {
-          console.log('🔄 Reinitializing Chat listeners');
-          window.chatApp.setupFirebaseListeners();
-        }
-      }, 1000);
+      // Test actual data access
+      console.log('🧪 Testing data access...');
+      db.collection('boards').doc('public').collection('todos').limit(1).get()
+        .then((snapshot) => {
+          console.log('✅ Data access test successful. Docs:', snapshot.size);
+
+          // Initialize apps after successful test
+          setTimeout(() => {
+            console.log('🔄 Starting app initialization...');
+            if (window.todoApp) {
+              console.log('📝 Initializing Todo listeners');
+              window.todoApp.setupFirebaseListeners();
+            }
+            if (window.pictureApp) {
+              console.log('🖼️ Initializing Picture listeners');
+              window.pictureApp.setupFirebaseListeners();
+            }
+            if (window.chatApp) {
+              console.log('💬 Initializing Chat listeners');
+              window.chatApp.setupFirebaseListeners();
+            }
+          }, 500);
+        })
+        .catch((error) => {
+          console.log('❌ Data access test failed:', error);
+        });
     } else {
-      // Sign in anonymously immediately
-      console.log('🔑 Signing in anonymously...');
+      console.log('🔑 No user found, signing in anonymously...');
+      isFirebaseReady = false;
+      updateConnectionStatus();
+
       auth.signInAnonymously().then(() => {
         console.log('✅ Anonymous sign-in successful');
       }).catch((error) => {
-        console.log('❌ Anonymous sign-in failed:', error);
+        console.log('❌ Anonymous sign-in failed:', error.code, error.message);
         isFirebaseReady = false;
         updateConnectionStatus();
       });
     }
   });
 
-  console.log('Firebase initialized successfully');
+  console.log('✅ Firebase setup completed');
 } catch (error) {
-  console.log('Firebase initialization failed:', error);
+  console.log('💥 Firebase initialization failed:', error);
   isFirebaseReady = false;
+  updateConnectionStatus();
 }
 
 // Update connection status function
@@ -151,11 +181,7 @@ class TodoApp {
           console.log('❌ Failed to add todo to Firestore:', error);
         });
     } else {
-      todo.id = Date.now();
-      todo.createdAt = new Date().toISOString();
-      this.todos.unshift(todo);
-      this.saveLocal();
-      this.render();
+      console.log('⚠️ Firebase not available for Todo add');
     }
   }
 
@@ -174,12 +200,7 @@ class TodoApp {
           });
       }
     } else {
-      const todo = this.todos.find(t => t.id === id);
-      if (todo) {
-        todo.completed = !todo.completed;
-        this.saveLocal();
-        this.render();
-      }
+      console.log('⚠️ Firebase not available for Todo toggle');
     }
   }
 
@@ -195,15 +216,10 @@ class TodoApp {
           console.log('Failed to delete todo:', error);
         });
     } else {
-      this.todos = this.todos.filter(t => t.id !== id);
-      this.saveLocal();
-      this.render();
+      console.log('⚠️ Firebase not available for Todo delete');
     }
   }
 
-  saveLocal() {
-    localStorage.setItem('todos', JSON.stringify(this.todos));
-  }
 
   render() {
     const todoList = document.getElementById('todo-list');
@@ -216,10 +232,10 @@ class TodoApp {
       li.innerHTML = `
         <span class="todo-text">${todo.text}</span>
         <div class="todo-actions">
-          <button class="complete-btn" onclick="todoApp.toggleTodo(${todo.id})">
+          <button class="complete-btn" onclick="window.todoApp.toggleTodo('${todo.id}')">
             <i class="fas ${todo.completed ? 'fa-undo' : 'fa-check'}"></i>
           </button>
-          <button class="delete-btn" onclick="todoApp.deleteTodo(${todo.id})">
+          <button class="delete-btn" onclick="window.todoApp.deleteTodo('${todo.id}')">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -301,17 +317,10 @@ class PictureApp {
             console.log('Image added to Firestore successfully:', docRef.id);
           })
           .catch((error) => {
-            console.log('Failed to add image to Firestore:', error);
-            image.id = Date.now() + Math.random();
-            image.createdAt = new Date().toISOString();
-            this.images.unshift(image);
-            this.saveLocal();
-            this.render();
+            console.log('❌ Failed to add image to Firestore:', error);
           });
       } else {
-        this.images.unshift(image);
-        this.saveLocal();
-        this.render();
+        console.log('⚠️ Firebase not available for Picture add');
       }
     };
     reader.readAsDataURL(file);
@@ -329,15 +338,10 @@ class PictureApp {
           console.log('Failed to delete image:', error);
         });
     } else {
-      this.images = this.images.filter(img => img.id !== id);
-      this.saveLocal();
-      this.render();
+      console.log('⚠️ Firebase not available for Picture delete');
     }
   }
 
-  saveLocal() {
-    localStorage.setItem('images', JSON.stringify(this.images));
-  }
 
   render() {
     const preview = document.getElementById('picture-preview');
@@ -351,7 +355,7 @@ class PictureApp {
       container.innerHTML = `
         <img src="${image.data}" alt="${image.name}" class="preview-image"
              style="max-width: 200px; max-height: 200px; object-fit: cover;">
-        <button onclick="pictureApp.deleteImage(${image.id})"
+        <button onclick="window.pictureApp.deleteImage('${image.id}')"
                 style="position: absolute; top: 5px; right: 5px;
                        background: rgba(220, 53, 69, 0.8); color: white;
                        border: none; border-radius: 50%; width: 25px; height: 25px;
@@ -427,19 +431,10 @@ class ChatApp {
           console.log('Message added to Firestore successfully:', docRef.id);
         })
         .catch((error) => {
-          console.log('Failed to add message to Firestore:', error);
-          message.id = Date.now();
-          message.timestamp = new Date().toISOString();
-          this.messages.push(message);
-          this.saveLocal();
-          this.render();
+          console.log('❌ Failed to add message to Firestore:', error);
         });
     } else {
-      message.id = Date.now();
-      message.timestamp = new Date().toISOString();
-      this.messages.push(message);
-      this.saveLocal();
-      this.render();
+      console.log('⚠️ Firebase not available for Chat add');
     }
   }
 
@@ -472,15 +467,10 @@ class ChatApp {
           console.log('Failed to delete messages:', error);
         });
     } else {
-      this.messages = [];
-      this.saveLocal();
-      this.render();
+      console.log('⚠️ Firebase not available for Chat clear');
     }
   }
 
-  saveLocal() {
-    localStorage.setItem('chat_messages', JSON.stringify(this.messages));
-  }
 
   render() {
     const chatMessages = document.getElementById('chat-messages');
