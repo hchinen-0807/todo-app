@@ -267,6 +267,12 @@ section:hover {
   min-height: 200px;
 }
 
+@media (min-width: 1024px) {
+  .chat-container {
+    min-height: 280px;
+  }
+}
+
 #chat-messages {
   flex: 1;
   background: rgba(15, 23, 42, 0.3);
@@ -355,35 +361,44 @@ section:hover {
   }
 
   section {
-    min-height: 350px;
+    min-height: 400px;
   }
 
   .chat-section {
     grid-column: 1 / -1;
-    min-height: 350px;
+    min-height: 300px;
   }
 }
 
 @media (min-width: 1024px) {
+  body {
+    padding: 24px;
+  }
+
   .container {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 24px;
-    max-width: 1200px;
+    max-width: 1400px;
   }
 
   section {
-    padding: 24px;
-    min-height: 400px;
+    padding: 32px;
+    min-height: 600px;
   }
 
   .todo-section,
-  .picture-section,
-  .chat-section {
-    min-height: 400px;
+  .picture-section {
+    min-height: 600px;
   }
 
   .chat-section {
     grid-column: 1 / -1;
+    min-height: 400px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    margin-bottom: 24px;
   }
 }
 

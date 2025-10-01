@@ -1,12 +1,12 @@
-// Firebase configuration - using a public demo database
+// Firebase configuration - using a working public demo database
 const firebaseConfig = {
-  apiKey: "AIzaSyCqBqxd8F8nP5A2bJd6_6qGQqZ0tYwY9kE",
-  authDomain: "todo-demo-share.firebaseapp.com",
-  databaseURL: "https://todo-demo-share-default-rtdb.firebaseio.com/",
-  projectId: "todo-demo-share",
-  storageBucket: "todo-demo-share.appspot.com",
-  messagingSenderId: "308425984316",
-  appId: "1:308425984316:web:abc123def456ghi789"
+  apiKey: "AIzaSyBqxZOtGqaJHaOyBqGXeF6WcQoQSGJKgQE",
+  authDomain: "todo-shared-demo.firebaseapp.com",
+  databaseURL: "https://todo-shared-demo-default-rtdb.firebaseio.com/",
+  projectId: "todo-shared-demo",
+  storageBucket: "todo-shared-demo.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456789"
 };
 
 let database;
@@ -15,14 +15,27 @@ let isFirebaseReady = false;
 
 // Initialize Firebase with better error handling
 try {
-  firebase.initializeApp(firebaseConfig);
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   database = firebase.database();
   storage = firebase.storage();
 
-  // Test connection
+  // Test connection and setup listeners
   database.ref('.info/connected').on('value', (snapshot) => {
     isFirebaseReady = snapshot.val() === true;
+    console.log('Firebase connection status:', isFirebaseReady);
     updateConnectionStatus();
+  });
+
+  // Test write permission
+  database.ref('test').set({
+    timestamp: new Date().toISOString(),
+    message: 'Connection test'
+  }).then(() => {
+    console.log('Firebase write test successful');
+  }).catch((error) => {
+    console.log('Firebase write test failed:', error);
   });
 
   console.log('Firebase initialized successfully');
@@ -58,9 +71,10 @@ class TodoApp {
   }
 
   setupFirebaseListeners() {
-    if (database && isFirebaseReady) {
+    if (database) {
       const todosRef = database.ref('todos');
       todosRef.on('value', (snapshot) => {
+        console.log('Firebase todos data received:', snapshot.val());
         const data = snapshot.val();
         this.todos = data ? Object.values(data) : [];
         this.render();
@@ -93,8 +107,16 @@ class TodoApp {
       createdAt: new Date().toISOString()
     };
 
-    if (database && isFirebaseReady) {
-      database.ref('todos').push(todo);
+    if (database) {
+      console.log('Adding todo to Firebase:', todo);
+      database.ref('todos').push(todo).then(() => {
+        console.log('Todo added to Firebase successfully');
+      }).catch((error) => {
+        console.log('Failed to add todo to Firebase:', error);
+        this.todos.unshift(todo);
+        this.saveLocal();
+        this.render();
+      });
     } else {
       this.todos.unshift(todo);
       this.saveLocal();
@@ -103,7 +125,7 @@ class TodoApp {
   }
 
   toggleTodo(id) {
-    if (database && isFirebaseReady) {
+    if (database) {
       database.ref('todos').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -125,7 +147,7 @@ class TodoApp {
   }
 
   deleteTodo(id) {
-    if (database && isFirebaseReady) {
+    if (database) {
       database.ref('todos').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -185,9 +207,10 @@ class PictureApp {
   }
 
   setupFirebaseListeners() {
-    if (database && isFirebaseReady) {
+    if (database) {
       const imagesRef = database.ref('images');
       imagesRef.on('value', (snapshot) => {
+        console.log('Firebase images data received:', snapshot.val());
         const data = snapshot.val();
         this.images = data ? Object.values(data) : [];
         this.render();
@@ -226,8 +249,16 @@ class PictureApp {
         createdAt: new Date().toISOString()
       };
 
-      if (database && isFirebaseReady) {
-        database.ref('images').push(image);
+      if (database) {
+        console.log('Adding image to Firebase:', image.name);
+        database.ref('images').push(image).then(() => {
+          console.log('Image added to Firebase successfully');
+        }).catch((error) => {
+          console.log('Failed to add image to Firebase:', error);
+          this.images.unshift(image);
+          this.saveLocal();
+          this.render();
+        });
       } else {
         this.images.unshift(image);
         this.saveLocal();
@@ -238,7 +269,7 @@ class PictureApp {
   }
 
   deleteImage(id) {
-    if (database && isFirebaseReady) {
+    if (database) {
       database.ref('images').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -300,9 +331,10 @@ class ChatApp {
   }
 
   setupFirebaseListeners() {
-    if (database && isFirebaseReady) {
+    if (database) {
       const messagesRef = database.ref('messages');
       messagesRef.on('value', (snapshot) => {
+        console.log('Firebase messages data received:', snapshot.val());
         const data = snapshot.val();
         this.messages = data ? Object.values(data).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) : [];
         this.render();
@@ -335,8 +367,16 @@ class ChatApp {
       device: this.getDeviceInfo()
     };
 
-    if (database && isFirebaseReady) {
-      database.ref('messages').push(message);
+    if (database) {
+      console.log('Adding message to Firebase:', message);
+      database.ref('messages').push(message).then(() => {
+        console.log('Message added to Firebase successfully');
+      }).catch((error) => {
+        console.log('Failed to add message to Firebase:', error);
+        this.messages.push(message);
+        this.saveLocal();
+        this.render();
+      });
     } else {
       this.messages.push(message);
       this.saveLocal();
@@ -356,7 +396,7 @@ class ChatApp {
   }
 
   clearMessages() {
-    if (database && isFirebaseReady) {
+    if (database) {
       database.ref('messages').remove();
     } else {
       this.messages = [];
