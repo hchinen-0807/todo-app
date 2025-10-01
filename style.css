@@ -34,7 +34,7 @@ section {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  min-height: 280px;
+  min-height: 300px;
   display: flex;
   flex-direction: column;
 }
@@ -55,43 +55,21 @@ section:hover {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* Title Styling with First Letter Enhancement */
+/* Title Styling */
 .section-title {
   font-size: 1.5rem;
   margin-bottom: 16px;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #f1f5f9;
+  color: #ffffff;
   letter-spacing: -0.025em;
 }
 
 .section-title.left-align {
   text-align: left;
-  justify-content: flex-start;
 }
 
 .section-title.right-align {
   text-align: right;
-  justify-content: flex-end;
-  flex-direction: row-reverse;
-}
-
-.first-letter {
-  font-size: 1.3em;
-  font-weight: 700;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
-}
-
-.section-title i {
-  color: #64748b;
-  font-size: 0.9em;
-  opacity: 0.7;
 }
 
 /* Todo Section */
@@ -382,7 +360,7 @@ section:hover {
 
   .chat-section {
     grid-column: 1 / -1;
-    min-height: 280px;
+    min-height: 350px;
   }
 }
 
@@ -395,17 +373,17 @@ section:hover {
 
   section {
     padding: 24px;
-    min-height: 380px;
+    min-height: 400px;
   }
 
   .todo-section,
-  .picture-section {
-    min-height: 380px;
+  .picture-section,
+  .chat-section {
+    min-height: 400px;
   }
 
   .chat-section {
     grid-column: 1 / -1;
-    min-height: 300px;
   }
 }
 
