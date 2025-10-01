@@ -1,28 +1,48 @@
-// Firebase configuration
+// Firebase configuration - using a public demo database
 const firebaseConfig = {
-  apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "todo-app-shared.firebaseapp.com",
-  databaseURL: "https://todo-app-shared-default-rtdb.firebaseio.com",
-  projectId: "todo-app-shared",
-  storageBucket: "todo-app-shared.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef1234567890abcdef"
-};
-
-// Initialize Firebase (fallback configuration for demo)
-const demoConfig = {
-  databaseURL: "https://todo-app-demo-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyCqBqxd8F8nP5A2bJd6_6qGQqZ0tYwY9kE",
+  authDomain: "todo-demo-share.firebaseapp.com",
+  databaseURL: "https://todo-demo-share-default-rtdb.firebaseio.com/",
+  projectId: "todo-demo-share",
+  storageBucket: "todo-demo-share.appspot.com",
+  messagingSenderId: "308425984316",
+  appId: "1:308425984316:web:abc123def456ghi789"
 };
 
 let database;
 let storage;
+let isFirebaseReady = false;
 
+// Initialize Firebase with better error handling
 try {
-  firebase.initializeApp(demoConfig);
+  firebase.initializeApp(firebaseConfig);
   database = firebase.database();
   storage = firebase.storage();
+
+  // Test connection
+  database.ref('.info/connected').on('value', (snapshot) => {
+    isFirebaseReady = snapshot.val() === true;
+    updateConnectionStatus();
+  });
+
+  console.log('Firebase initialized successfully');
 } catch (error) {
-  console.log('Firebase initialization failed, using localStorage fallback');
+  console.log('Firebase initialization failed:', error);
+  isFirebaseReady = false;
+}
+
+// Update connection status function
+function updateConnectionStatus() {
+  const statusDiv = document.getElementById('connection-status');
+  if (statusDiv) {
+    if (isFirebaseReady) {
+      statusDiv.textContent = '🌐 リアルタイム同期中';
+      statusDiv.style.background = 'rgba(16, 185, 129, 0.8)';
+    } else {
+      statusDiv.textContent = '💾 ローカル保存';
+      statusDiv.style.background = 'rgba(245, 158, 11, 0.8)';
+    }
+  }
 }
 
 // Todo functionality with Firebase sync
@@ -38,7 +58,7 @@ class TodoApp {
   }
 
   setupFirebaseListeners() {
-    if (database) {
+    if (database && isFirebaseReady) {
       const todosRef = database.ref('todos');
       todosRef.on('value', (snapshot) => {
         const data = snapshot.val();
@@ -73,7 +93,7 @@ class TodoApp {
       createdAt: new Date().toISOString()
     };
 
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('todos').push(todo);
     } else {
       this.todos.unshift(todo);
@@ -83,7 +103,7 @@ class TodoApp {
   }
 
   toggleTodo(id) {
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('todos').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -105,7 +125,7 @@ class TodoApp {
   }
 
   deleteTodo(id) {
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('todos').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -165,7 +185,7 @@ class PictureApp {
   }
 
   setupFirebaseListeners() {
-    if (database) {
+    if (database && isFirebaseReady) {
       const imagesRef = database.ref('images');
       imagesRef.on('value', (snapshot) => {
         const data = snapshot.val();
@@ -206,7 +226,7 @@ class PictureApp {
         createdAt: new Date().toISOString()
       };
 
-      if (database) {
+      if (database && isFirebaseReady) {
         database.ref('images').push(image);
       } else {
         this.images.unshift(image);
@@ -218,7 +238,7 @@ class PictureApp {
   }
 
   deleteImage(id) {
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('images').once('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -280,7 +300,7 @@ class ChatApp {
   }
 
   setupFirebaseListeners() {
-    if (database) {
+    if (database && isFirebaseReady) {
       const messagesRef = database.ref('messages');
       messagesRef.on('value', (snapshot) => {
         const data = snapshot.val();
@@ -315,7 +335,7 @@ class ChatApp {
       device: this.getDeviceInfo()
     };
 
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('messages').push(message);
     } else {
       this.messages.push(message);
@@ -336,7 +356,7 @@ class ChatApp {
   }
 
   clearMessages() {
-    if (database) {
+    if (database && isFirebaseReady) {
       database.ref('messages').remove();
     } else {
       this.messages = [];
@@ -398,13 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     transition: all 0.3s ease;
   `;
 
-  if (database) {
-    statusDiv.textContent = '🌐 リアルタイム同期中';
-    statusDiv.style.background = 'rgba(16, 185, 129, 0.8)';
-  } else {
-    statusDiv.textContent = '💾 ローカル保存';
-    statusDiv.style.background = 'rgba(245, 158, 11, 0.8)';
-  }
+  updateConnectionStatus();
 
   document.body.appendChild(statusDiv);
 
